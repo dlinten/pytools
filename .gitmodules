@@ -1,0 +1,3 @@
+[submodule "test_resources/test-project-1"]
+	path = test_resources/test-project-1
+	url = git@github.com:dlinten/test-project-1.git

@@ -20,24 +20,41 @@
 import re
 from subprocess import CalledProcessError
 from pytools.async_runner import Execute
-from pytools.fancy_message import Message
 
 git_short_ref = re.compile('^[0-9a-f]{7}$')
 
 
+class InvalidGitRepoException(Exception):
+    def __init__(self, message, errors):
+        super(InvalidGitRepoException, self).__init__(message)
+        self.errors = errors
+
+
 def local_commit_ref(repo_path: str) -> str:
+    """Gets the local commit ref HEAD for a given repository file location
+
+    :param repo_path: Repository path location
+    :return str: Ref HEAD value in short notation
+    :raises CalledProcessError: If there is an invalid repository path
+    """
     try:
         for line in Execute.execute_async('git --git-dir={repo_path}/.git rev-parse --short --verify HEAD'.
                                           format(repo_path=repo_path)):
             if git_short_ref.match(line):
-                return line
+                return line.strip('\n')
             else:
                 raise CalledProcessError(returncode=128, cmd=line)
     except CalledProcessError as ex:
-        Message.error('Invalid GIT repo at {path}'.format(path=repo_path))
-        raise ex
+        raise InvalidGitRepoException('Invalid GIT repo at {path}'.format(path=repo_path), ex)
 
 
 def is_path_a_repo(repo_path: str) -> bool:
-    return git_short_ref(repo_path) is not None
+    """Checks if a given path is a GIT Repository
+    :param repo_path: Repository path location
+    :return bool: True or False
+    """
+    try:
+        return local_commit_ref(repo_path) is not None
+    except InvalidGitRepoException:
+        return False
 
