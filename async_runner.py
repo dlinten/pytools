@@ -19,6 +19,9 @@
 
 import sys
 import subprocess
+import re
+
+ARG_PATTERN = re.compile(r'(?:[^\s,"]|"(?:\\.|[^"])*")+')
 
 
 class Execute:
@@ -33,7 +36,11 @@ class Execute:
         :returns str: Iterator to lines returned from stdout
         :raises CalledProcessError
         """
-        popen = subprocess.Popen(cmd.split(' '),
+        args = list()
+        for val in ARG_PATTERN.finditer(cmd):
+            args.append(val.group().replace("\"", "").replace("\'", ""))
+
+        popen = subprocess.Popen(args,
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.STDOUT,
                                  universal_newlines=True)
@@ -45,6 +52,7 @@ class Execute:
         popen.stdout.close()
 
         return_code = popen.wait()
+
         if return_code != 0:
             raise subprocess.CalledProcessError(return_code, cmd.split(' '))
 
