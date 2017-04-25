@@ -18,6 +18,9 @@
 ########################################################################
 
 
+import os
+
+
 class Colour:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -27,6 +30,23 @@ class Colour:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+
+
+def check_path_arg(console_arg, question: str, default_value: str, is_path=False):
+    if console_arg is None or console_arg == "":
+        user_input = input("{cstart}{question}{cend} {cbold}[{default_value}]{cstart}?{cend} ".format(
+            cstart=Colour.OKGREEN,
+            cend=Colour.ENDC,
+            cbold=Colour.BOLD,
+            question=question,
+            default_value=default_value))
+        console_arg = default_value if user_input == "" else user_input
+    if is_path:
+        console_arg = os.path.abspath(os.path.expanduser(console_arg))
+        if not os.path.exists(console_arg) and not os.path.isfile(console_arg):
+            Message.error("Invalid argument, path or file does not exist!")
+            console_arg = check_path_arg("", question, default_value, is_path)
+    return console_arg
 
 
 class Message:
